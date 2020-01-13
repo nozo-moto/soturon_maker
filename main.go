@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -82,8 +86,83 @@ func runCmd(c *cobra.Command, args []string) (err error) {
 }
 
 func convert() {
-	err := exec.Command("pandoc", absPath, "-o", strings.Replace(filepath.Base(file), "md", "tex", 1)).Run()
+	convertMdToLatex()
+	insertTemplate()
+	convertLatexToPdf()
+}
+
+func convertMdToLatex() {
+	err := exec.Command("pandoc", "-r", "markdown-auto_identifiers", absPath, "-o", "tmp.tex").Run()
 	if err != nil {
 		panic(err)
 	}
+}
+
+func insertTemplate() {
+	var writer *bufio.Writer
+	tpl := template.Must(template.ParseFiles("theis_template.tpl"))
+	bytes, err := ioutil.ReadFile("tmp.tex")
+	if err != nil {
+		panic(err)
+	}
+	// output file
+	outputFile, err := os.OpenFile(
+		strings.Replace(
+			filepath.Base(file), "md", "tex", 1,
+		),
+		os.O_WRONLY|os.O_CREATE,
+		0600,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer outputFile.Close()
+	writer = bufio.NewWriter(outputFile)
+	err = tpl.Execute(writer, string(bytes))
+	if err != nil {
+		panic(err)
+	}
+	writer.Flush()
+}
+
+func convertLatexToPdf() {
+	filename := strings.Replace(
+		filepath.Base(file), "md", "tex", 1,
+	)
+	err := exec.Command(
+		"scp", filename, "uaizu:~/",
+	).Run()
+	if err != nil {
+		panic(err)
+	}
+
+	err = exec.Command(
+		"ssh",
+		"uaizu",
+		"/usr/local/texlive/bin/platex",
+		filename,
+	).Run()
+	if err != nil {
+		panic(err)
+	}
+
+	err = exec.Command(
+		"ssh",
+		"uaizu",
+		"/usr/local/texlive/bin/dvipdfmx",
+		strings.Replace(filename, "tex", "dvi", 1),
+	).Run()
+	if err != nil {
+		panic(err)
+	}
+
+	err = exec.Command(
+		"scp",
+		"uaizu:~/"+strings.Replace(filename, "tex", "pdf", 1),
+		".",
+	).Run()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("create ", strings.Replace(filename, "tex", "pdf", 1))
 }
