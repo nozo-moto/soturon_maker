@@ -27,6 +27,7 @@ var (
 
 	file    = ""
 	absPath = ""
+	output  = ""
 )
 
 func Execute() error {
@@ -41,6 +42,7 @@ func main() {
 	}
 	rootCmd.AddCommand(run)
 	rootCmd.PersistentFlags().StringVar(&file, "file", "", "markdown file")
+	rootCmd.PersistentFlags().StringVar(&output, "output", "", "output file")
 	if err := rootCmd.Execute(); err != nil {
 		panic(err)
 	}
@@ -155,7 +157,9 @@ func convertLatexToPdf() {
 		filepath.Base(file), "md", "tex", 1,
 	)
 	err = exec.Command(
-		"scp", filename, host+":~/",
+		"scp",
+		filename,
+		host+":~/",
 	).Run()
 	if err != nil {
 		panic(err)
@@ -181,13 +185,16 @@ func convertLatexToPdf() {
 		panic(err)
 	}
 
+	if output == "" {
+		output = strings.Replace(filename, "tex", "pdf", 1)
+	}
 	err = exec.Command(
 		"scp",
 		host+":~/"+strings.Replace(filename, "tex", "pdf", 1),
-		".",
+		"./"+output,
 	).Run()
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("create ", strings.Replace(filename, "tex", "pdf", 1))
+	fmt.Println("create ", output)
 }

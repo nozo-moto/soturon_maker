@@ -2,6 +2,7 @@
 \usepackage{pifont}
 \usepackage{graphicx}
 \usepackage{cite}
+\usepackage {svg}
 
 \bibliographystyle{ieice}
 
