@@ -1,5 +1,7 @@
 # Soturon_Maker
 
+![](https://github.com/nozo-moto/soturon_maker/workflows/Go/badge.svg)
+
 ## What
 某大学の卒論をMarkdownでかけるようにするためのCLIツール
 
