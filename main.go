@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/radovskyb/watcher"
 	"github.com/spf13/cobra"
 )
@@ -43,6 +44,7 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		panic(err)
 	}
+
 }
 
 func runCmd(c *cobra.Command, args []string) (err error) {
@@ -118,7 +120,25 @@ func insertTemplate() {
 	}
 	defer outputFile.Close()
 	writer = bufio.NewWriter(outputFile)
-	err = tpl.Execute(writer, string(bytes))
+	type Theis struct {
+		Author     string
+		StudentId  string
+		Supervisor string
+		Title      string
+		Body       string
+	}
+	err = godotenv.Load()
+	if err != nil {
+		panic("Error loading .env file")
+	}
+	theis := Theis{
+		Author:     os.Getenv("AUTHOR"),
+		StudentId:  os.Getenv("STUDENTID"),
+		Supervisor: os.Getenv("SUPERVISOR"),
+		Title:      os.Getenv("TITLE"),
+		Body:       string(bytes),
+	}
+	err = tpl.Execute(writer, theis)
 	if err != nil {
 		panic(err)
 	}
@@ -126,11 +146,16 @@ func insertTemplate() {
 }
 
 func convertLatexToPdf() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	host := os.Getenv("HOST")
 	filename := strings.Replace(
 		filepath.Base(file), "md", "tex", 1,
 	)
-	err := exec.Command(
-		"scp", filename, "uaizu:~/",
+	err = exec.Command(
+		"scp", filename, host+":~/",
 	).Run()
 	if err != nil {
 		panic(err)
@@ -138,7 +163,7 @@ func convertLatexToPdf() {
 
 	err = exec.Command(
 		"ssh",
-		"uaizu",
+		host,
 		"/usr/local/texlive/bin/platex",
 		filename,
 	).Run()
@@ -148,7 +173,7 @@ func convertLatexToPdf() {
 
 	err = exec.Command(
 		"ssh",
-		"uaizu",
+		host,
 		"/usr/local/texlive/bin/dvipdfmx",
 		strings.Replace(filename, "tex", "dvi", 1),
 	).Run()
@@ -158,7 +183,7 @@ func convertLatexToPdf() {
 
 	err = exec.Command(
 		"scp",
-		"uaizu:~/"+strings.Replace(filename, "tex", "pdf", 1),
+		host+":~/"+strings.Replace(filename, "tex", "pdf", 1),
 		".",
 	).Run()
 	if err != nil {

@@ -5,11 +5,11 @@
 
 \bibliographystyle{ieice}
 
-\author{name1}
-\studentid{6000000}
-\supervisor{name2}
-\title{A Sample of GT}
+\author{ {{.Author}} }
+\studentid{ {{.StudentId}} }
+\supervisor{ {{.Supervisor}} }
+\title{ {{.Title}} }
 \begin{document}
 \maketitle
-{{.}}
+{{.Body}}
 \end{document}
