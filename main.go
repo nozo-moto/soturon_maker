@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/joho/godotenv"
