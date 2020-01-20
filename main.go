@@ -100,6 +100,38 @@ func convertMdToLatex() {
 	if err != nil {
 		panic(err)
 	}
+
+	// https://github.com/jgm/pandoc/issues/1023
+	// https://github.com/jgm/pandoc/issues/1023#issuecomment-83501964
+	// result.gsub!('\begin{longtable}', '\begin{center}\begin{supertabular}')
+	// result.gsub!('\endhead', '')
+	// result.gsub!('\end{longtable}', '\end{supertabular}\end{center}')
+
+	data, err := ioutil.ReadFile("tmp.tex")
+	if err != nil {
+		panic(err)
+	}
+
+	result := strings.Replace(
+		strings.Replace(
+			strings.Replace(
+				string(data),
+				"\\begin{longtable}",
+				"\\begin{center}\\begin{supertabular}",
+				-1,
+			),
+			"\\endhead",
+			"",
+			-1,
+		),
+		"\\end{longtable}",
+		"\\end{supertabular}\\end{center}",
+		-1,
+	)
+	err = ioutil.WriteFile("tmp.tex", []byte(result), 0666)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func insertTemplate() {
@@ -159,16 +191,25 @@ func convertLatexToPdf() {
 	err = exec.Command(
 		"scp",
 		filename,
+		"bibfile.bib",
 		host+":~/",
 	).Run()
 	if err != nil {
 		panic(err)
 	}
-
 	err = exec.Command(
 		"ssh",
 		host,
 		"/usr/local/texlive/bin/platex",
+		filename,
+	).Run()
+	if err != nil {
+		panic(err)
+	}
+	err = exec.Command(
+		"ssh",
+		host,
+		"/usr/local/texlive/bin/pbibtex",
 		filename,
 	).Run()
 	if err != nil {
