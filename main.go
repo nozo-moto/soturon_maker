@@ -115,17 +115,42 @@ func convertMdToLatex() {
 	result := strings.Replace(
 		strings.Replace(
 			strings.Replace(
-				string(data),
-				"\\begin{longtable}",
-				"\\begin{center}\\begin{supertabular}",
+				strings.Replace(
+					strings.Replace(
+						strings.Replace(
+							strings.Replace(
+								strings.Replace(
+									string(data),
+									"\\begin{longtable}",
+									"\\begin{center}\\begin{supertabular}",
+									-1,
+								),
+								"\\endhead",
+								"",
+								-1,
+							),
+							"\\end{longtable}",
+							"\\end{supertabular}\\end{center}",
+							-1,
+						),
+						"0.27\\columnwidth",
+						"0.50\\columnwidth",
+						-1,
+					),
+					"0.36\\columnwidth",
+					"0.36\\columnwidth",
+					-1,
+				),
+				"\\end{supertabular}\\end{center}",
+				"\\end{supertabular}\\end{center}\n\\end{table*}",
 				-1,
 			),
-			"\\endhead",
-			"",
+			"\\begin{center}\\begin{supertabular}[]{@{}llll@{}}",
+			"\\begin{table*}[!h]\n\\begin{center}\\begin{supertabular}[]{@{}llll@{}}",
 			-1,
 		),
-		"\\end{longtable}",
-		"\\end{supertabular}\\end{center}",
+		"0.06",
+		"0.24",
 		-1,
 	)
 	err = ioutil.WriteFile("tmp.tex", []byte(result), 0666)
